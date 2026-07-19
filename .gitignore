@@ -1,7 +1,7 @@
 # Environment variables
 .env
 
-# Pytho
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
