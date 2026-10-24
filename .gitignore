@@ -36,3 +36,10 @@ env/
 
 # Schedule/config files
 schedule.json
+*.bak
+
+# SQLite Databases & Local Storage
+*.db
+*.sqlite
+*.sqlite3
+control_log.txt
