@@ -1,19 +1,20 @@
 import os
 import requests
 import logging
+import asyncio
 from dotenv import load_dotenv
-from livekit.agents import function_tool  # ✅ Correct decorator
+from livekit.agents import function_tool
 
 load_dotenv()
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def detect_city_by_ip() -> str:
+def _sync_detect_city_by_ip() -> str:
     try:
         logger.info("IP के ज़रिए शहर detect करने की कोशिश की जा रही है")
-        ip_info = requests.get("https://ipapi.co/json/").json()
+        response = requests.get("https://ipapi.co/json/", timeout=5)
+        ip_info = response.json()
         city = ip_info.get("city")
         if city:
             logger.info(f"IP से शहर Detect किया गया: {city}")
@@ -25,9 +26,16 @@ def detect_city_by_ip() -> str:
         logger.error(f"IP से city detect करने में error आया: {e}")
         return "Delhi"
 
+async def detect_city_by_ip() -> str:
+    """Offloads IP detection HTTP request to a worker thread."""
+    return await asyncio.to_thread(_sync_detect_city_by_ip)
+
+def _sync_fetch_weather(url: str, params: dict) -> requests.Response:
+    """Synchronous weather fetch with timeout to run in a worker thread."""
+    return requests.get(url, params=params, timeout=10)
+
 @function_tool
 async def get_weather(city: str = "") -> str:
-    
     api_key = os.getenv("OPENWEATHER_API_KEY")
 
     if not api_key:
@@ -35,7 +43,7 @@ async def get_weather(city: str = "") -> str:
         return "Environment variables में OpenWeather API key नहीं मिली।"
 
     if not city:
-        city = detect_city_by_ip()
+        city = await detect_city_by_ip()
 
     logger.info(f"City के लिए weather fetch किया जा रहा है।: {city}")
     url = "https://api.openweathermap.org/data/2.5/weather"
@@ -46,7 +54,8 @@ async def get_weather(city: str = "") -> str:
     }
 
     try:
-        response = requests.get(url, params=params)
+        # Offload synchronous weather request to worker thread
+        response = await asyncio.to_thread(_sync_fetch_weather, url, params)
         if response.status_code != 200:
             logger.error(f"OpenWeather API में error आया।: {response.status_code} - {response.text}")
             return f"Error: {city} के लिए weather fetch नहीं कर पाए। कृपया city name चेक करें।"
@@ -66,7 +75,9 @@ async def get_weather(city: str = "") -> str:
         logger.info(f"Weather result: \n{result}")
         return result
 
+    except requests.exceptions.Timeout:
+        logger.error("Weather API request timed out.")
+        return "Weather API request time out हो गई।"
     except Exception as e:
         logger.exception(f"Weather fetch करते समय exception आया: {e}")
-        return "Weather fetch करते समय एक error आया"
-    
+        return f"Weather fetch करते समय एक error आया: {e}"

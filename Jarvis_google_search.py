@@ -1,8 +1,9 @@
 import os
 import requests
 import logging
+import asyncio
 from dotenv import load_dotenv
-from livekit.agents import function_tool  # ✅ Correct decorator
+from livekit.agents import function_tool
 from datetime import datetime
 
 # Load environment variables
@@ -11,6 +12,10 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def _sync_fetch_google_search(url: str, params: dict) -> requests.Response:
+    """Synchronous network fetch with timeout to run in a worker thread."""
+    return requests.get(url, params=params, timeout=10)
 
 @function_tool
 async def google_search(query: str) -> str:
@@ -32,7 +37,15 @@ async def google_search(query: str) -> str:
     }
 
     logger.info("Google Custom Search API को request भेजी जा रही है...")
-    response = requests.get(url, params=params)
+    try:
+        # Offload synchronous network I/O to a worker thread to avoid blocking the asyncio event loop
+        response = await asyncio.to_thread(_sync_fetch_google_search, url, params)
+    except requests.exceptions.Timeout:
+        logger.error("Google Search API request timed out.")
+        return "Google Search API request time out हो गई।"
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Google Search request failed: {e}")
+        return f"Google Search request विफल रही: {e}"
 
     if response.status_code != 200:
         logger.error(f"Google API में error आया: {response.status_code} - {response.text}")
@@ -59,4 +72,3 @@ async def google_search(query: str) -> str:
 @function_tool
 async def get_current_datetime() -> str:
     return datetime.now().isoformat()
-

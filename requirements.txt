@@ -16,3 +16,4 @@ livekit
 pyttsx3
 pillow
 opencv-python
+pygetwindow>=0.0.9
