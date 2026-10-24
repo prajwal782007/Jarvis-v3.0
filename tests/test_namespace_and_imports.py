@@ -17,11 +17,19 @@ class TestNamespaceAndImports(unittest.TestCase):
             self.assertIs(getattr(agent_builtins, "open"), builtins.open)
 
     def test_launch_application_in_assistant_tools(self):
-        """Verify Assistant registers launch_application."""
+        """Verify Assistant registers launch_application and memory tools."""
         assistant = agent.Assistant()
         tool_names = [getattr(t, "__name__", str(t)) for t in assistant._tools]
         self.assertIn("launch_application", tool_names)
         self.assertNotIn("open", tool_names)
+        # Verify Milestone 2 tools are registered
+        self.assertIn("save_memory_tool", tool_names)
+        self.assertIn("search_memory_tool", tool_names)
+        self.assertIn("add_task_tool", tool_names)
+        self.assertIn("list_tasks_tool", tool_names)
+        self.assertIn("add_schedule", tool_names)
+        self.assertIn("get_tomorrow_schedule", tool_names)
+        self.assertIn("get_today_schedule", tool_names)
 
     def test_requirements_contains_pygetwindow(self):
         """Verify pygetwindow is present in requirements.txt."""

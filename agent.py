@@ -11,6 +11,14 @@ from Jarvis_google_search import google_search, get_current_datetime
 from jarvis_get_whether import get_weather
 from Jarvis_window_CTRL import launch_application, close, folder_file
 from Jarvis_file_opner import Play_file
+from Jarvis_schedule import add_schedule, get_tomorrow_schedule, get_today_schedule
+from memory_tools import (
+    save_memory_tool, search_memory_tool, delete_memory_tool,
+    add_task_tool, list_tasks_tool, update_task_progress_tool,
+    record_exam_or_deadline_tool, get_upcoming_deadlines_tool,
+    record_project_progress_tool, remember_person_tool,
+    log_debug_solution_tool, search_debug_solutions_tool
+)
 from keyboard_mouse_CTRL import (
     move_cursor_tool, mouse_click_tool, scroll_cursor_tool,
     type_text_tool, press_key_tool, swipe_gesture_tool,
@@ -32,6 +40,21 @@ class Assistant(Agent):
                 close,
                 folder_file,
                 Play_file,
+                add_schedule,
+                get_tomorrow_schedule,
+                get_today_schedule,
+                save_memory_tool,
+                search_memory_tool,
+                delete_memory_tool,
+                add_task_tool,
+                list_tasks_tool,
+                update_task_progress_tool,
+                record_exam_or_deadline_tool,
+                get_upcoming_deadlines_tool,
+                record_project_progress_tool,
+                remember_person_tool,
+                log_debug_solution_tool,
+                search_debug_solutions_tool,
                 move_cursor_tool,
                 mouse_click_tool,
                 scroll_cursor_tool,
